@@ -1,8 +1,7 @@
 package com.example.kyly.demo;
 
-import android.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.Log;
@@ -10,6 +9,7 @@ import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -25,9 +25,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AppCompatButton addPics;
     private AppCompatButton addBackground;
     private AppCompatImageView background;
-    private FrameLayout root;
+    private RelativeLayout root;
+    private Button resize;
 
-    private View v;
+    private View view;
 
     private int screenWidth;
     private int screenHeight;
@@ -36,6 +37,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int lastY;
     private int dx;
     private int dy;
+
+    private int width = 60;
 
     private boolean isMoving = false;
 
@@ -68,7 +71,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         addPics = (AppCompatButton) findViewById(R.id.addpic);
         addBackground = (AppCompatButton) findViewById(R.id.addbackground);
         background = (AppCompatImageView) findViewById(R.id.background);
-        root = (FrameLayout) findViewById(R.id.rootlayout);
+        root = (RelativeLayout) findViewById(R.id.rootlayout);
+        resize = new Button(this);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width,width);
+        resize.setLayoutParams(params);
+        resize.setBackgroundColor(getResources().getColor(R.color.colorAccent));
+        resize.setVisibility(View.GONE);
+        resize.setOnTouchListener(this);
+        root.addView(resize);
+
 
         addPics.setOnClickListener(this);
         addTips.setOnClickListener(this);
@@ -97,11 +108,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TextView textView = new TextView(this);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,FrameLayout.LayoutParams.WRAP_CONTENT);
         textView.setText(tips.size() + "标签");
-        params.setMargins(50, 50, 50, 50);
         textView.setLayoutParams(params);
+        textView.setPadding(50, 50, 50, 50);
         textView.setBackgroundResource(R.color.colorAccent);
-
-
         textView.setOnTouchListener(this);
         textView.setClickable(true);
 
@@ -112,11 +121,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void addImage(){
         RelativeLayout view = (RelativeLayout) LayoutInflater.from(this).inflate(R.layout.image_layout,null);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(300,200);
-        view.setLayoutParams(params);
+       /* RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(300,200);
+        params.setMargins(screenWidth / 2 - 150,screenHeight / 2 -100,screenWidth / 2 + 150,screenHeight / 2 + 100);
+        view.setLayoutParams(params);*/
         view.setOnTouchListener(this);
+        //view.setVisibility(View.GONE);
         root.addView(view);
+        view.invalidate();
+
+        view.layout(screenWidth / 2 - 150,screenHeight / 2 -100,screenWidth / 2 + 150,screenHeight / 2 + 100);
+        resize.layout(view.getWidth() - width, view.getTop(), view.getRight(), view.getTop() + width);
+        resize.setVisibility(View.VISIBLE);
         images.add(view);
+
+        this.view = view;
     }
 
     @Override
@@ -135,6 +153,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 lastX = (int) event.getRawX();
                 lastY = (int) event.getRawY();
                 Log.e("","width="+v.getWidth() +",height="+v.getHeight()+",x="+event.getX()+",y="+event.getY());
+                if (! (v instanceof Button)){
+                    view = v;
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 dx = (int)event.getRawX() - lastX;
@@ -144,38 +165,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     isMoving = true;
                 }
 
-
-                left = v.getLeft() + dx;
-                right = v.getRight() + dx;
-                top = v.getTop() + dy;
-                bottom = v.getBottom() + dy;
-
-                if (left <= 0){
-                    left = 0;
-                    right =  v.getWidth();
-                    Log.e("warn","left < 0");
+                if (v instanceof Button){
+                    resizeImage(dx,dy);
+                } else {
+                    moveView(v,dx,dy);
                 }
 
-                if (left >= screenWidth - v.getWidth()){
-                    left = screenWidth - v.getWidth();
-                    right = screenWidth;
-                    Log.e("warn","right < 0");
-                }
 
-                if(top <= 0){
-                    top = 0;
-                    bottom = v.getHeight();
-                    Log.e("warn", "top < 0");
-                }
 
-                if (top >= screenHeight - v.getHeight()){
-                    bottom = screenHeight;
-                    top = screenHeight - v.getHeight();
-                    Log.e("warn","bottom < 0");
-                }
-
-                v.layout(left, top, right,bottom);
-                Log.e("", "right=" + right + ",bottom=" + bottom);
                 lastX = (int) event.getRawX();
                 lastY = (int) event.getRawY();
                 break;
@@ -185,15 +182,65 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 right = screenWidth - left - v.getWidth();
                 bottom = screenHeight - top - v.getHeight();
 
-                FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) v.getLayoutParams();
-                params.setMargins(left,top,right,bottom);
-                v.setLayoutParams(params);
+                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) v.getLayoutParams();
+                params.setMargins(left, top, right, bottom);
+                if (v instanceof RelativeLayout ) {
+                    resize.layout(v.getLeft() + v.getWidth() - width, v.getTop(), v.getRight(), v.getTop() + width);
+                    params = (RelativeLayout.LayoutParams) resize.getLayoutParams();
+                    params.setMargins(resize.getLeft(),resize.getTop(),screenWidth - resize.getLeft() - width,screenHeight - resize.getTop() - width);
+                    resize.setLayoutParams(params);
+                }
                 isMoving = false;
                 break;
         }
-        this.v = v;
         mGestureDetector.onTouchEvent(event);
         return true;
+    }
+
+    private void resizeImage(int dx,int dy){
+
+    }
+
+    private void moveView(View v,int dx,int dy){
+        int left,right,top,bottom;
+        left = v.getLeft() + dx;
+        right = v.getRight() + dx;
+        top = v.getTop() + dy;
+        bottom = v.getBottom() + dy;
+
+        if (left <= 0){
+            left = 0;
+            right =  v.getWidth();
+            Log.e("warn","left < 0");
+        }
+
+        if (left >= screenWidth - v.getWidth()){
+            left = screenWidth - v.getWidth();
+            right = screenWidth;
+            Log.e("warn","right < 0");
+        }
+
+        if(top <= 0){
+            top = 0;
+            bottom = v.getHeight();
+            Log.e("warn", "top < 0");
+        }
+
+        if (top >= screenHeight - v.getHeight()){
+            bottom = screenHeight;
+            top = screenHeight - v.getHeight();
+            Log.e("warn","bottom < 0");
+        }
+
+        v.layout(left, top, right,bottom);
+        if (v instanceof RelativeLayout ) {
+            resize.layout(v.getLeft() + v.getWidth() - width, v.getTop(), v.getRight(), v.getTop() + width);
+        }
+
+        if (v instanceof Button){
+
+        }
+        Log.e("", "right=" + right + ",bottom=" + bottom);
     }
 
     @Override
@@ -220,14 +267,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onLongPress(MotionEvent e) {
         Log.e("","isMoving="+isMoving);
         if(!isMoving) {
-            if (v instanceof TextView) {
-                tips.remove(v);
+            if (view instanceof TextView) {
+                tips.remove(view);
             } else {
-                images.remove(v);
+                images.remove(view);
             }
 
-            v.setVisibility(View.GONE);
-            v = null;
+            view.setVisibility(View.GONE);
+            view = null;
         }
     }
 
