@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Demo</string>
+    <string name="point">left=%1$d,top=%2$d,right=%3$d,bottom=%4$d;[dx=%5$d,dy=%6$d]</string>
 </resources>
