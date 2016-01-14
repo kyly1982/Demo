@@ -1,4 +1,4 @@
-package widget.StickerView;
+package com.example.kyly.demo.widget.StickerView;
 
 /**
  * Created by Yangchen on 2015/9/7.

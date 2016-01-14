@@ -30,23 +30,15 @@
 
     <TextView
         android:id="@+id/point"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:text="1111"/>
 
-    <RelativeLayout
-        android:id="@+id/rootlayout"
+    <com.example.kyly.demo.widget.StickerView.StickerView
+        android:id="@+id/rootView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_below="@id/point"
-        android:background="@color/colorPrimary"
-        android:layout_above="@id/addTip">
-        <android.support.v7.widget.AppCompatImageView
-            android:id="@+id/background"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/colorPrimary"
-            android:visibility="gone"/>
-    </RelativeLayout>
+        android:layout_height="wrap_content"
+        android:layout_above="@id/addTip"
+        android:layout_below="@id/point"></com.example.kyly.demo.widget.StickerView.StickerView>
 </RelativeLayout>

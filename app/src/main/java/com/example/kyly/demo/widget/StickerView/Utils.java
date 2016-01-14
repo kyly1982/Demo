@@ -1,4 +1,4 @@
-package widget.StickerView;
+package com.example.kyly.demo.widget.StickerView;
 
 import android.app.Activity;
 import android.content.Context;
@@ -12,6 +12,11 @@ public class Utils {
 
     private static Point point = null;
 
+    /**
+     * 获取屏幕长宽
+     * @param context
+     * @return
+     */
     public static Point getDisplayWidthPixels(Context context) {
         if (point != null) {
             return point;
@@ -23,7 +28,7 @@ public class Utils {
     }
 
     /**
-     * 计算两点之间的距离?
+     * 计算两点之间的距离
      * @param x1
      * @param y1
      * @param x2

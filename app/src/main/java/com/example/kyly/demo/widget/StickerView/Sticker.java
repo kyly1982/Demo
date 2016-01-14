@@ -1,4 +1,4 @@
-package widget.StickerView;
+package com.example.kyly.demo.widget.StickerView;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;

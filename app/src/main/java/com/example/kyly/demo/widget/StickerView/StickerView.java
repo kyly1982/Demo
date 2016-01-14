@@ -1,14 +1,16 @@
-package widget.StickerView;
+package com.example.kyly.demo.widget.StickerView;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.example.kyly.demo.R;
 
@@ -19,7 +21,7 @@ import java.util.List;
 /**
  * Created by Yangchen on 2015/9/7.
  */
-public class StickerView extends View {
+public class StickerView extends ViewGroup {
 
     /**
      * 最大放大倍数
@@ -27,18 +29,47 @@ public class StickerView extends View {
     public static final float MAX_SCALE_SIZE = 5.0f;
     public static final float MIN_SCALE_SIZE = 0.5f;
 
-    private RectF mViewRect;
+    private RectF mViewRect;//当前视图的范围
 
     private float mLastPointX, mLastPointY, deviation;
 
-    private Bitmap mControllerBitmap, mDeleteBitmap, bgBitmap;
-    private float mControllerWidth, mControllerHeight, mDeleteWidth, mDeleteHeight;
-    private boolean mInController, mInMove;
+    private Bitmap mControllerBitmap;//控制旋转缩放的图标
+    private Bitmap mDeleteBitmap;//删除图标
+    /**
+     * 背景图
+     */
+    private Bitmap bgBitmap;
+    /**
+     * 控制图标长和宽
+     */
+    private float mControllerWidth, mControllerHeight;
+    /**
+     * 删除图标长和宽
+     */
+    private float mDeleteWidth, mDeleteHeight;//操作图标长和宽
+    /**
+     * 控制模式
+     */
+    private boolean mInController;
+    /**
+     * 移动模式
+     */
+    private boolean mInMove;
 
+    /**
+     * 删除模式
+     */
     private boolean mInDelete = false;
 
     //    private Sticker currentSticker;
+    /**
+     * 帖纸
+     */
     private List<Sticker> stickers = new ArrayList<Sticker>();
+    /**
+     * 标签
+     */
+    private List<View> labels = new ArrayList<>();
 
     /**
      * 焦点贴纸索引
@@ -58,6 +89,9 @@ public class StickerView extends View {
         init();
     }
 
+    /**
+     * 初始化控制图标和删除图标
+     */
     private void init() {
 
         mControllerBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_sticker_control);
@@ -73,7 +107,32 @@ public class StickerView extends View {
     public void setBitmapBackground(Bitmap backgroundBitmap){
         this.bgBitmap = backgroundBitmap;
         postInvalidate();
+;    }
+
+    public void setBitmapBackground(int drawableResId){
+        bgBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+        postInvalidate();
     }
+
+    public void addBitMap(Bitmap bitmap){
+        Point point = Utils.getDisplayWidthPixels(getContext());
+        Sticker sticker = new Sticker(bitmap, point.x, point.x);
+        stickers.add(sticker);
+        focusStickerPosition = stickers.size() - 1;
+        setFocusSticker(focusStickerPosition);
+        postInvalidate();
+    }
+
+    public void addView(View view){
+        if (null == view){
+            return;
+        }
+
+        labels.add(view);
+        requestLayout();
+    }
+
+
 
     /**
      * 设置水印
@@ -82,20 +141,19 @@ public class StickerView extends View {
      */
     public void setWaterMark(Bitmap bitmap, Bitmap bgBitmap) {
         this.bgBitmap = bgBitmap;
-        Point point = Utils.getDisplayWidthPixels(getContext());
-        Sticker sticker = new Sticker(bitmap, point.x, point.x);
-        stickers.add(sticker);
-        focusStickerPosition = stickers.size() - 1;
-        setFocusSticker(focusStickerPosition);
-        postInvalidate();
-
+        addBitMap(bitmap);
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
-        canvas.drawBitmap(bgBitmap, 0, 0, null);
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        if (null != bgBitmap) {
+            Matrix matrix = new Matrix();
+            matrix.setTranslate(55f, 100f);
+            matrix.setScale(1.5f,1.5f);
+            //canvas.drawBitmap(bgBitmap, 0, 0, null);
+            canvas.drawBitmap(bgBitmap,matrix,null);
+        }
 
         if (stickers.size() <= 0) {
             return;
@@ -111,7 +169,7 @@ public class StickerView extends View {
                 canvas.drawLine(stickers.get(i).getMapPointsDst()[6], stickers.get(i).getMapPointsDst()[7], stickers.get(i).getMapPointsDst()[0], stickers.get(i).getMapPointsDst()[1], stickers.get(i).getmBorderPaint());
 
                 canvas.drawBitmap(mControllerBitmap, stickers.get(i).getMapPointsDst()[4] - mControllerWidth / 2, stickers.get(i).getMapPointsDst()[5] - mControllerHeight / 2, null);
-                canvas.drawBitmap(mDeleteBitmap, stickers.get(i).getMapPointsDst()[0] - mDeleteWidth / 2, stickers.get(i).getMapPointsDst()[1] - mDeleteHeight / 2, null);
+                //canvas.drawBitmap(mDeleteBitmap, stickers.get(i).getMapPointsDst()[0] - mDeleteWidth / 2, stickers.get(i).getMapPointsDst()[1] - mDeleteHeight / 2, null);
             }
         }
 
@@ -385,4 +443,53 @@ public class StickerView extends View {
         focusStickerPosition = stickers.size() - 1;
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        measureChildren(widthMeasureSpec, heightMeasureSpec);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        final int childCount = labels.size();
+
+        for (int i = 0;i < childCount;i++){
+            View childview = labels.get(i);
+            int width = childview.getMeasuredWidth();
+            int height = childview.getMeasuredHeight();
+            LayoutParams params = (LayoutParams) childview.getLayoutParams();
+            width += (params.leftMargin + params.rightMargin);
+            height += (params.topMargin + params.bottomMargin);
+
+            params.left = left+params.leftMargin;
+            params.top = top+params.topMargin;
+            params.right = left + params.leftMargin + width;
+            params.bottom = top + params.topMargin + height;
+            childview.layout(params.left,params.top,params.right,params.bottom);
+        }
+    }
+
+    public static class LayoutParams extends MarginLayoutParams{
+        public int  left;
+        public int right;
+        public int top;
+        public int bottom;
+
+
+        public LayoutParams(Context c, AttributeSet attrs) {
+            super(c, attrs);
+        }
+
+        public LayoutParams(ViewGroup.LayoutParams source) {
+            super(source);
+        }
+
+        public LayoutParams(MarginLayoutParams source) {
+            super(source);
+        }
+
+        public LayoutParams(int width, int height) {
+            super(width, height);
+        }
+    }
 }
