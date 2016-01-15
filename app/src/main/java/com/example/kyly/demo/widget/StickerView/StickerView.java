@@ -129,7 +129,7 @@ public class StickerView extends ViewGroup {
         }
 
         labels.add(view);
-        requestLayout();
+        addView(view,getChildCount());
     }
 
 
@@ -320,11 +320,7 @@ public class StickerView extends ViewGroup {
     private boolean canStickerMove(float cx, float cy) {
         float px = cx + stickers.get(focusStickerPosition).getMapPointsDst()[8];
         float py = cy + stickers.get(focusStickerPosition).getMapPointsDst()[9];
-        if (mViewRect.contains(px, py)) {
-            return true;
-        } else {
-            return false;
-        }
+        return mViewRect.contains(px, py);
     }
 
 
@@ -445,35 +441,64 @@ public class StickerView extends ViewGroup {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        measureChildren(widthMeasureSpec, heightMeasureSpec);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        //super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        /**
+         * 获取此ViewGroup上级容器为其推荐的宽高和计算模式
+         */
+        int parentWidth = MeasureSpec.getSize(widthMeasureSpec);
+        int parentHeight = MeasureSpec.getSize(heightMeasureSpec);
+        int modWidth = MeasureSpec.getMode(widthMeasureSpec);
+        int modHeight = MeasureSpec.getMode(heightMeasureSpec);
+
+
+        /**
+         * 设置为wrap_content时的宽高
+         */
+        int width=0;
+        int height = 0;
+
+        /**
+         * 子控件的长宽
+         */
+        int childWidth;
+        int childHeight;
+
+        View childView;
+
+        /**
+         * 计算出所有的childView的宽和高
+         */
+        for (int childIndex = 0;childIndex < getChildCount();childIndex++){
+            childView = getChildAt(childIndex);
+            measureChild(childView, widthMeasureSpec, heightMeasureSpec);
+            childWidth = childView.getMeasuredWidth();
+            childHeight = childView.getMeasuredHeight();
+            width = width > childWidth ? width:childWidth;
+            height = height > childHeight ? height:childHeight;
+        }
+
+        setMeasuredDimension((modWidth == MeasureSpec.EXACTLY) ? parentWidth:width,(modHeight == MeasureSpec.EXACTLY) ? parentHeight:height);
+
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         final int childCount = labels.size();
 
+        /**
+         * 只将子控件放在其所设置的位置上，不用管其位置关系
+         */
         for (int i = 0;i < childCount;i++){
             View childview = labels.get(i);
-            int width = childview.getMeasuredWidth();
-            int height = childview.getMeasuredHeight();
-            LayoutParams params = (LayoutParams) childview.getLayoutParams();
-            width += (params.leftMargin + params.rightMargin);
-            height += (params.topMargin + params.bottomMargin);
-
-            params.left = left+params.leftMargin;
-            params.top = top+params.topMargin;
-            params.right = left + params.leftMargin + width;
-            params.bottom = top + params.topMargin + height;
-            childview.layout(params.left,params.top,params.right,params.bottom);
+            int childWidth = childview.getMeasuredWidth();
+            int childHeight = childview.getMeasuredHeight();
+            childview.layout(left,top,left + childWidth,top + childHeight);
         }
     }
 
-    public static class LayoutParams extends MarginLayoutParams{
-        public int  left;
-        public int right;
-        public int top;
-        public int bottom;
+    public static class LayoutParams extends ViewGroup.LayoutParams{
+
 
 
         public LayoutParams(Context c, AttributeSet attrs) {
@@ -484,12 +509,10 @@ public class StickerView extends ViewGroup {
             super(source);
         }
 
-        public LayoutParams(MarginLayoutParams source) {
-            super(source);
-        }
 
         public LayoutParams(int width, int height) {
             super(width, height);
         }
+
     }
 }

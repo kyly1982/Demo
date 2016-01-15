@@ -2,14 +2,17 @@ package com.example.kyly.demo;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.example.kyly.demo.widget.StickerView.StickerView;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.ArrayList;
 
@@ -21,12 +24,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView point;
 
 
-
     //帖纸
     private StickerView rootView;
-
-    private FrameLayout l;
-
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
 
     @Override
@@ -35,12 +39,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         //images = new ArrayList<>(3);
         tips = new ArrayList<>(2);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (null == addPics){
+        if (null == addPics) {
             initView();
         }
     }
@@ -50,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
     }
 
-    private void initView(){
+    private void initView() {
         addTips = (AppCompatButton) findViewById(R.id.addTip);
         addPics = (AppCompatButton) findViewById(R.id.addpic);
         addBackground = (AppCompatButton) findViewById(R.id.addbackground);
@@ -66,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
 
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.addTip:
                 addNewTip();
                 break;
@@ -74,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 addStickerView();
                 break;
             case R.id.addbackground:
-                    addBackground();
+                addBackground();
                 break;
             case R.id.rootView:
                 if (null != rootView) {
@@ -84,23 +91,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void addBackground(){
+    private void addBackground() {
         final Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
         rootView.setBitmapBackground(bitmap);
     }
 
-    private void addNewTip(){
+    private void addNewTip() {
+        TextView textView = new TextView(this);
+        StickerView.LayoutParams params = new StickerView.LayoutParams(200, 50);
+        textView.setLayoutParams(params);
+        textView.setTextColor(getResources().getColor(R.color.colorAccent));
+        textView.setText("测试测试仪");
+        textView.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
 
-
-        point.setDrawingCacheEnabled(true);
-        //textView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-        //textView.buildDrawingCache();
-        Bitmap bitmap = point.getDrawingCache();
-        if (null != bitmap){
-            rootView.addBitMap(bitmap);
-        }
+        rootView.addView(textView);
     }
-
 
 
     //添加帖纸
@@ -110,7 +115,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
+    @Override
+    public void onStart() {
+        super.onStart();
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.example.kyly.demo/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
 
+    @Override
+    public void onStop() {
+        super.onStop();
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.example.kyly.demo/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
+    }
 }
